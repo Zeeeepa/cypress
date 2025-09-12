@@ -209,6 +209,10 @@ const spawnModule = {
               return
             }
 
+            if (str.includes('ERROR:dbus/bus.cc:')) {
+              return
+            }
+
             // else pass it along!
             process.stderr.write(data)
           })
