@@ -1,7 +1,7 @@
 <!-- See the ../guides/writing-the-cypress-changelog.md for details on writing the changelog. -->
 ## 15.2.1
 
-_Released 9/23/2025_
+_Released 9/23/2025 (PENDING)_
 
 **Bugfixes:**
 
