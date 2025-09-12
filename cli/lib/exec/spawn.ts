@@ -146,7 +146,7 @@ const spawnModule = {
 
         if (ci.isCI) {
           debug('disabling dbus in CI')
-          process.env.DBUS_SESSION_BUS_ADDRESS = 'disabled:'
+          stdioOptions.env.DBUS_SESSION_BUS_ADDRESS = 'disabled:'
         }
 
         debug('spawn args %o %o', args, _.omit(stdioOptions, 'env'))
