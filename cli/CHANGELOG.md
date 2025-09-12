@@ -1,4 +1,12 @@
 <!-- See the ../guides/writing-the-cypress-changelog.md for details on writing the changelog. -->
+## 15.2.1
+
+_Released 9/23/2025_
+
+**Bugfixes:**
+
+- Stray `dbus` related errors no longer appear in the output stream in CI environments. This was a regression in 15.0.0. Fixes [#32290](https://github.com/cypress-io/cypress/issues/32290). Addressed in [#32479](https://github.com/cypress-io/cypress/pull/32479).
+
 ## 15.2.0
 
 _Released 9/9/2025_
