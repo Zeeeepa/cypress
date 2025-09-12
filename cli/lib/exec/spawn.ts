@@ -10,6 +10,7 @@ import xvfb from './xvfb'
 import verifyModule from '../tasks/verify'
 import { throwFormErrorText, getError, errors } from '../errors'
 import readline from 'readline'
+import ci from 'ci-info'
 
 const debug = Debug('cypress:cli')
 
@@ -143,6 +144,11 @@ const spawnModule = {
           args.unshift(process.env.CYPRESS_INTERNAL_DEV_DEBUG)
         }
 
+        if (ci.isCI) {
+          debug('disabling dbus in CI')
+          process.env.DBUS_SESSION_BUS_ADDRESS = 'disabled:'
+        }
+
         debug('spawn args %o %o', args, _.omit(stdioOptions, 'env'))
         debug('spawning Cypress with executable: %s', executable)
 
@@ -206,10 +212,6 @@ const spawnModule = {
             // if we have a callback and this explicitly returns
             // false then bail
             if (onStderrData && onStderrData(str)) {
-              return
-            }
-
-            if (str.includes('ERROR:dbus/bus.cc:')) {
               return
             }
 
