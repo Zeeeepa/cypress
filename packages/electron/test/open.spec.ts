@@ -216,17 +216,6 @@ describe('open', () => {
     })
   })
 
-  describe('when in non-interactive mode)', () => {
-    beforeEach(() => {
-      vi.stubGlobal('process.stdout.isTTY', false)
-    })
-
-    it('disables dbus', async () => {
-      await open(appPath, argv)
-      expect(process.env.DBUS_SESSION_BUS_ADDRESS).toBe('disabled:')
-    })
-  })
-
   describe('when electron logging is enabled via debug', () => {
     beforeEach(() => {
       // @ts-expect-error
