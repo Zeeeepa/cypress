@@ -6,6 +6,7 @@ _Released 9/23/2025 (PENDING)_
 **Bugfixes:**
 
 - Stray `dbus` related errors no longer appear in the output stream in CI environments. This was a regression in 15.0.0. Fixes [#32290](https://github.com/cypress-io/cypress/issues/32290). Addressed in [#32479](https://github.com/cypress-io/cypress/pull/32479).
+- In development mode, Electron `stderr` is piped directly to Cypress' `stderr` to make it clear why Electron failed to start, if it fails to start. Fixes [#32358](https://github.com/cypress-io/cypress/issues/32358). Addressed in [32468](https://github.com/cypress-io/cypress/pull/32468).
 
 ## 15.2.0
 
