@@ -15,7 +15,6 @@ import * as paths from './paths'
 import * as _install from './install'
 import { ensureSymlink, access, remove } from 'fs-extra'
 import { filter, DEBUG_PREFIX } from '@packages/stderr-filtering'
-import ci from 'ci-info'
 
 const debugElectron = Debug('cypress:electron:electron')
 const debugStderr = Debug('cypress:internal-stderr')
@@ -162,8 +161,8 @@ export async function open (appPath: string, argv: string[]) {
       argv.push('--enable-logging')
     }
 
-    if (ci.isCI) {
-      debugElectron('disabling dbus in CI')
+    if (!process.stdout.isTTY) {
+      debugElectron('disabling dbus in non-interactive mode')
       process.env.DBUS_SESSION_BUS_ADDRESS = 'disabled:'
     }
 

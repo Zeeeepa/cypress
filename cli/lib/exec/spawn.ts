@@ -2,7 +2,6 @@ import _ from 'lodash'
 import os from 'os'
 import cp from 'child_process'
 import path from 'path'
-import Bluebird from 'bluebird'
 import Debug from 'debug'
 import util from '../util'
 import state from '../tasks/state'
@@ -10,7 +9,6 @@ import xvfb from './xvfb'
 import { needsSandbox } from '../tasks/verify'
 import { throwFormErrorText, getError, errors } from '../errors'
 import readline from 'readline'
-import ci from 'ci-info'
 import { stdin, stdout, stderr } from 'process'
 
 const debug = Debug('cypress:cli')
@@ -79,8 +77,8 @@ const spawnModule = {
       stdio: getStdio(needsXvfb),
     })
 
-    const spawn = (overrides: any = {}): any => {
-      return new Bluebird((resolve: any, reject: any) => {
+    const spawn = (overrides: any = {}): Promise<number> => {
+      return new Promise(async (resolve, reject) => {
         _.defaults(overrides, {
           onStderrData: false,
         })
@@ -145,8 +143,8 @@ const spawnModule = {
           args.unshift(process.env.CYPRESS_INTERNAL_DEV_DEBUG)
         }
 
-        if (ci.isCI) {
-          debug('disabling dbus in CI')
+        if (!process.stdout.isTTY) {
+          debug('disabling dbus in non-interactive mode')
           stdioOptions.env.DBUS_SESSION_BUS_ADDRESS = 'disabled:'
         }
 
