@@ -7,10 +7,11 @@ import Debug from 'debug'
 import util from '../util'
 import state from '../tasks/state'
 import xvfb from './xvfb'
-import verifyModule from '../tasks/verify'
+import { needsSandbox } from '../tasks/verify'
 import { throwFormErrorText, getError, errors } from '../errors'
 import readline from 'readline'
 import ci from 'ci-info'
+import { stdin, stdout, stderr } from 'process'
 
 const debug = Debug('cypress:cli')
 
@@ -51,7 +52,7 @@ function getStdio (needsXvfb: boolean): any {
 }
 
 const spawnModule = {
-  start (args: any, options: any = {}): any {
+  async start (args: any, options: any = {}): Promise<any> {
     const needsXvfb = xvfb.isNeeded()
     let executable = state.getPathToExecutable(state.getBinaryDir())
 
@@ -100,7 +101,7 @@ const spawnModule = {
           debug('in dev mode the args became %o', args)
         }
 
-        if (!options.dev && verifyModule.needsSandbox()) {
+        if (!options.dev && needsSandbox()) {
           electronArgs.push('--no-sandbox')
         }
 
@@ -155,13 +156,15 @@ const spawnModule = {
         const child = cp.spawn(executable, args, stdioOptions)
 
         function resolveOn (event: any): any {
-          return function (code: any, signal: any): any {
+          return async function (code: any, signal: any): Promise<any> {
             debug('child event fired %o', { event, code, signal })
 
             if (code === null) {
               const errorObject = errors.childProcessKilled(event, signal)
 
-              return getError(errorObject).then(reject)
+              const err = await getError(errorObject)
+
+              return reject(err)
             }
 
             resolve(code)
@@ -174,8 +177,8 @@ const spawnModule = {
 
         if (isPlatform('win32')) {
           const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout,
+            input: stdin,
+            output: stdout,
           })
 
           // on windows, SIGINT does not propagate to the child process when ctrl+c is pressed
@@ -194,12 +197,12 @@ const spawnModule = {
         //  child STDERR => process STDERR with additional filtering
         if (child.stdin) {
           debug('piping process STDIN into child STDIN')
-          process.stdin.pipe(child.stdin)
+          stdin.pipe(child.stdin)
         }
 
         if (child.stdout) {
           debug('piping child STDOUT to process STDOUT')
-          child.stdout.pipe(process.stdout)
+          child.stdout.pipe(stdout)
         }
 
         // if this is defined then we are manually piping for linux
@@ -216,7 +219,7 @@ const spawnModule = {
             }
 
             // else pass it along!
-            process.stderr.write(data)
+            stderr.write(data)
           })
         }
 
@@ -227,7 +230,7 @@ const spawnModule = {
         // into the child process. unpiping does not seem
         // to have any effect. so we're just catching the
         // error here and not doing anything.
-        process.stdin.on('error', (err: any) => {
+        stdin.on('error', (err: any) => {
           if (['EPIPE', 'ENOTCONN'].includes(err.code)) {
             return
           }
@@ -241,17 +244,22 @@ const spawnModule = {
       })
     }
 
-    const spawnInXvfb = (): any => {
-      return xvfb
-      .start()
-      .then(userFriendlySpawn)
-      .finally(xvfb.stop)
+    const spawnInXvfb = async (): Promise<number> => {
+      try {
+        await xvfb.start()
+
+        const code = await userFriendlySpawn()
+
+        return code
+      } finally {
+        await xvfb.stop()
+      }
     }
 
-    const userFriendlySpawn = (linuxWithDisplayEnv: any): any => {
+    const userFriendlySpawn = async (linuxWithDisplayEnv?: any): Promise<any> => {
       debug('spawning, should retry on display problem?', Boolean(linuxWithDisplayEnv))
 
-      let brokenGtkDisplay: boolean
+      let brokenGtkDisplay: boolean = false
 
       const overrides: any = {}
 
@@ -268,8 +276,9 @@ const spawnModule = {
         })
       }
 
-      return spawn(overrides)
-      .then((code: any) => {
+      try {
+        const code: number = await spawn(overrides)
+
         if (code !== 0 && brokenGtkDisplay) {
           util.logBrokenGtkDisplayWarning()
 
@@ -277,10 +286,17 @@ const spawnModule = {
         }
 
         return code
-      })
-      // we can format and handle an error message from the code above
-      // prevent wrapping error again by using "known: undefined" filter
-      .catch({ known: undefined }, throwFormErrorText(errors.unexpected))
+      } catch (error: any) {
+        // we can format and handle an error message from the code above
+        // prevent wrapping error again by using "known: undefined" filter
+        if ((error as any).known === undefined) {
+          const raiseErrorFn = throwFormErrorText(errors.unexpected)
+
+          await raiseErrorFn(error.message)
+        }
+
+        throw error
+      }
     }
 
     if (needsXvfb) {
