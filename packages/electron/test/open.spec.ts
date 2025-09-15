@@ -63,8 +63,11 @@ describe('open', () => {
   let mockFilterWriter: Writable
   let mockElectronDebugFn: Mock<ReturnType<typeof Debug>>
   let mockStderrDebugFn: Mock<ReturnType<typeof Debug>>
+  const initialDbusEnv = 'some_initial_dbus_env'
 
   beforeEach(() => {
+    vi.stubEnv('DBUS_SESSION_BUS_ADDRESS', initialDbusEnv)
+
     // @ts-expect-error
     mockChildProcess = vi.mocked<ChildProcess>({
       on: vi.fn(),
@@ -127,6 +130,7 @@ describe('open', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
+    vi.unstubAllEnvs()
   })
 
   it('opens the electron app and returns the child process', async () => {
@@ -150,6 +154,76 @@ describe('open', () => {
 
       expect(filter).not.toHaveBeenCalled()
       expect(mockChildProcess.stderr.pipe).toHaveBeenCalledWith(process.stderr)
+    })
+  })
+
+  describe('interactive mode', () => {
+    let originalIsTTY: boolean | undefined
+    let ttySet: boolean = false
+
+    function setIsTTY (value: boolean) {
+      if (ttySet) {
+        return
+      }
+
+      originalIsTTY = process.stdout.isTTY
+
+      Object.defineProperty(process.stdout, 'isTTY', {
+        value: value,
+        writable: true,
+        configurable: true,
+      })
+
+      ttySet = true
+    }
+
+    afterEach(() => {
+      if (ttySet) {
+        if (originalIsTTY !== undefined) {
+          Object.defineProperty(process.stdout, 'isTTY', {
+            value: originalIsTTY,
+            writable: true,
+            configurable: true,
+          })
+        } else {
+          delete (process.stdout as any).isTTY
+        }
+      }
+
+      ttySet = false
+    })
+
+    describe('when interactive', () => {
+      beforeEach(() => {
+        setIsTTY(true)
+      })
+
+      it('does not disable dbus', async () => {
+        await open(appPath, argv)
+        expect(process.env.DBUS_SESSION_BUS_ADDRESS).toEqual(initialDbusEnv)
+      })
+    })
+
+    describe('when non-interactive', () => {
+      beforeEach(() => {
+        setIsTTY(false)
+      })
+
+      it('disables dbus', async () => {
+        await open(appPath, argv)
+        expect(process.env.DBUS_SESSION_BUS_ADDRESS).toBe('disabled:')
+      })
+    })
+  })
+
+  describe('when in non-interactive mode)', () => {
+    beforeEach(() => {
+      vi.stubGlobal('process.stdout.isTTY', false)
+    })
+
+    it('disables dbus', async () => {
+      await open(appPath, argv)
+      expect(process.env.DBUS_SESSION_BUS_ADDRESS).toBe('disabled:')
     })
   })
 
@@ -202,7 +276,6 @@ describe('open', () => {
 
     describe('anmd geteuid returns 0', () => {
       beforeEach(() => {
-        // @ts-expect-error
         vi.spyOn(process, 'geteuid').mockReturnValue(0)
       })
 
@@ -214,8 +287,6 @@ describe('open', () => {
 
     describe('and geteuid returns 1000', () => {
       beforeEach(() => {
-        // @ts-expect-error
-
         vi.spyOn(process, 'geteuid').mockReturnValue(1000)
       })
 
@@ -229,6 +300,7 @@ describe('open', () => {
       let originalGeteuid: typeof process.geteuid
 
       beforeEach(() => {
+        //eslint-disable-next-line no-restricted-properties
         originalGeteuid = process.geteuid
         Object.defineProperty(process, 'geteuid', {
           value: undefined,

@@ -65,6 +65,7 @@ export async function open (appPath: string, argv: string[]): Promise<ChildProce
     debugElectron('spawning %s with args', execPath, argv)
 
     if (!process.stdout.isTTY) {
+      console.log(process.stdout.isTTY)
       debugElectron('disabling dbus in non-interactive mode')
       process.env.DBUS_SESSION_BUS_ADDRESS = 'disabled:'
     }
