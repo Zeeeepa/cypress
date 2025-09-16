@@ -1,5 +1,6 @@
 import path from 'path'
 import { access, remove, ensureSymlink } from 'fs-extra'
+import { stat } from 'fs/promises'
 import { getPathToResources, getSymlinkType, getPathToExec } from './paths'
 import { filter, DEBUG_PREFIX } from '@packages/stderr-filtering'
 import minimist from 'minimist'
@@ -27,6 +28,16 @@ function getInspectFromOpts (argv: string[]): string | undefined {
   }
 
   return undefined
+}
+
+async function exists (path: string): Promise<boolean> {
+  try {
+    await stat(path)
+
+    return true
+  } catch (err) {
+    return false
+  }
 }
 
 export async function open (appPath: string, argv: string[]): Promise<ChildProcess> {
@@ -64,7 +75,7 @@ export async function open (appPath: string, argv: string[]): Promise<ChildProce
 
     debugElectron('spawning %s with args', execPath, argv)
 
-    if (!process.stdout.isTTY) {
+    if (!process.stdout.isTTY || (await exists('/.dockerenv'))) {
       debugElectron('disabling dbus in non-interactive mode')
       process.env.DBUS_SESSION_BUS_ADDRESS = 'disabled:'
     }

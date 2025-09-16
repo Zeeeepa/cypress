@@ -10,6 +10,17 @@ import { needsSandbox } from '../tasks/verify'
 import { throwFormErrorText, getError, errors } from '../errors'
 import readline from 'readline'
 import { stdin, stdout, stderr } from 'process'
+import { stat } from 'fs/promises'
+
+async function exists (path: string): Promise<boolean> {
+  try {
+    await stat(path)
+
+    return true
+  } catch (err) {
+    return false
+  }
+}
 
 const debug = Debug('cypress:cli')
 
@@ -143,7 +154,7 @@ const spawnModule = {
           args.unshift(process.env.CYPRESS_INTERNAL_DEV_DEBUG)
         }
 
-        if (!process.stdout.isTTY) {
+        if (!process.stdout.isTTY || (await exists('/.dockerenv'))) {
           debug('disabling dbus in non-interactive mode')
           stdioOptions.env.DBUS_SESSION_BUS_ADDRESS = 'disabled:'
         }

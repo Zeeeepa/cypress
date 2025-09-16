@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest'
 import { access, remove, ensureSymlink } from 'fs-extra'
+import { stat } from 'fs/promises'
 import { getPathToResources, getSymlinkType, getPathToExec } from '../src/paths'
 import { filter, DEBUG_PREFIX } from '@packages/stderr-filtering'
 import { Writable } from 'stream'
@@ -16,6 +17,13 @@ vi.mock('fs-extra', () => {
     access: vi.fn(),
     remove: vi.fn(),
     ensureSymlink: vi.fn(),
+  }
+})
+
+vi.mock('fs/promises', async (importActual) => {
+  return {
+    ...(await importActual()),
+    stat: vi.fn(),
   }
 })
 
@@ -67,6 +75,7 @@ describe('open', () => {
 
   beforeEach(() => {
     vi.stubEnv('DBUS_SESSION_BUS_ADDRESS', initialDbusEnv)
+    vi.mocked(stat).mockRejectedValue(new Error('ENOENT'))
 
     // @ts-expect-error
     mockChildProcess = vi.mocked<ChildProcess>({
@@ -213,6 +222,17 @@ describe('open', () => {
         await open(appPath, argv)
         expect(process.env.DBUS_SESSION_BUS_ADDRESS).toBe('disabled:')
       })
+    })
+  })
+
+  describe.only('when running in docker', () => {
+    beforeEach(() => {
+      vi.mocked(stat).mockResolvedValue({} as any)
+    })
+
+    it('disables dbus', async () => {
+      await open(appPath, argv)
+      expect(process.env.DBUS_SESSION_BUS_ADDRESS).toEqual('disabled:')
     })
   })
 
