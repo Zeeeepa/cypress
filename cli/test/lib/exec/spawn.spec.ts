@@ -9,7 +9,7 @@ import { EventEmitter as EE } from 'events'
 import readline from 'readline'
 import createDebug from 'debug'
 import { stdin, stdout, stderr } from 'process'
-
+import { stat } from 'fs/promises'
 import state from '../../../lib/tasks/state'
 import xvfb from '../../../lib/exec/xvfb'
 import spawn from '../../../lib/exec/spawn'
@@ -170,6 +170,13 @@ vi.mock('../../../lib/util', async (importActual) => {
   }
 })
 
+vi.mock('fs/promises', async (importActual) => {
+  return {
+    ...(await importActual()),
+    stat: vi.fn(),
+  }
+})
+
 const debug = createDebug('test')
 
 const cwd = process.cwd()
@@ -192,6 +199,14 @@ describe('lib/exec/spawn', function () {
       distro: 'Foo',
       release: 'OsVersion',
     } as Systeminformation.OsData)
+
+    vi.mocked(stat).mockImplementation((path) => {
+      if (path === '/.dockerenv') {
+        return Promise.reject(new Error('ENOENT')) // happy path is !docker
+      }
+
+      return Promise.resolve({} as any as ReturnType<typeof stat>)
+    })
 
     spawnedProcess = new EE()
     spawnedProcess.unref = vi.fn().mockReturnValue(undefined)
@@ -318,6 +333,22 @@ describe('lib/exec/spawn', function () {
       ], expect.objectContaining({
         detached: false,
         stdio: ['inherit', 'inherit', 'pipe'],
+      }))
+    })
+
+    it('sets DBUS_SESSION_BUS_ADDRESS when running in docker', async function () {
+      vi.mocked(stat).mockResolvedValue({} as any)
+
+      const startPromise = spawn.start('--foo')
+
+      spawnedProcess.emit('close', 0)
+
+      await startPromise
+
+      expect(cp.spawn).toHaveBeenCalledWith(expect.any(String), expect.any(Array), expect.objectContaining({
+        env: expect.objectContaining({
+          DBUS_SESSION_BUS_ADDRESS: 'disabled:',
+        }),
       }))
     })
 
