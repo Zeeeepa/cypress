@@ -225,7 +225,7 @@ describe('open', () => {
     })
   })
 
-  describe.only('when running in docker', () => {
+  describe('when running in docker', () => {
     beforeEach(() => {
       vi.mocked(stat).mockResolvedValue({} as any)
     })
