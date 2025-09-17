@@ -2432,79 +2432,79 @@ jobs:
       - restore_cached_workspace
       - run:
           name: Run before tag tags
-          command: yarn workspace @cypress/grep cypress:run:tags:before
+          command: yarn workspace @cypress/grep tags:before
       - run:
           name: Run describe tag tests
-          command: yarn workspace @cypress/grep cypress:run:tags:describe
+          command: yarn workspace @cypress/grep tags:describe
       - run:
           name: Run config tag tests
-          command: yarn workspace @cypress/grep cypress:run:tags:config
+          command: yarn workspace @cypress/grep tags:config
       - run:
           name: Run burn-in tests
-          command: yarn workspace @cypress/grep cypress:run:burn
+          command: yarn workspace @cypress/grep burn
       - run:
           name: Run inherit tag tests
-          command: yarn workspace @cypress/grep cypress:run:tags:inherit
+          command: yarn workspace @cypress/grep tags:inherit
       - run:
           name: Run registration tag tests
-          command: yarn workspace @cypress/grep cypress:run:multiple-registrations
+          command: yarn workspace @cypress/grep multiple-registrations
       - run:
           name: Run nested describe tag tests
-          command: yarn workspace @cypress/grep cypress:run:tags:nested-describe
+          command: yarn workspace @cypress/grep tags:nested-describe
       - run:
           name: Run skip tests
-          command: yarn workspace @cypress/grep cypress:run:skip
+          command: yarn workspace @cypress/grep skip
       - run:
           name: Run this test
-          command: yarn workspace @cypress/grep cypress:run:this
+          command: yarn workspace @cypress/grep this
       - run:
           name: Run tag test
-          command: yarn workspace @cypress/grep cypress:run:tags
+          command: yarn workspace @cypress/grep tags
       - run:
           name: Run each test
-          command: yarn workspace @cypress/grep cypress:run:each
+          command: yarn workspace @cypress/grep each
       - run:
           name: Run grep task test
-          command: yarn workspace @cypress/grep cypress:run:grep
+          command: yarn workspace @cypress/grep grep
       - run:
           name: Run tag or test
-          command: yarn workspace @cypress/grep cypress:run:tags:or
+          command: yarn workspace @cypress/grep tags:or
       - run:
           name: Run tag and test
-          command: yarn workspace @cypress/grep cypress:run:tags:and
+          command: yarn workspace @cypress/grep tags:and
       - run:
           name: Run tag and not test
-          command: yarn workspace @cypress/grep cypress:run:tags:and:not
+          command: yarn workspace @cypress/grep tags:and:not
       - run:
           name: Run or test
-          command: yarn workspace @cypress/grep cypress:run:or
+          command: yarn workspace @cypress/grep or
       - run:
           name: Run and test
-          command: yarn workspace @cypress/grep cypress:run:and
+          command: yarn workspace @cypress/grep and
       - run:
           name: Run and not test
-          command: yarn workspace @cypress/grep cypress:run:and:not
+          command: yarn workspace @cypress/grep and:not
       - run:
           name: Run filter specs test
-          command: yarn workspace @cypress/grep cypress:run:filter:specs
+          command: yarn workspace @cypress/grep filter:specs
       - run:
           name: Run tags filter specs test
-          command: yarn workspace @cypress/grep cypress:run:tags:filter:specs
+          command: yarn workspace @cypress/grep tags:filter:specs
       - run:
           name: Run omit specs test
-          command: yarn workspace @cypress/grep cypress:run:omit:specs
+          command: yarn workspace @cypress/grep omit:specs
       - run:
           name: Run tags omit specs test
-          command: yarn workspace @cypress/grep cypress:run:tags:omit:specs
+          command: yarn workspace @cypress/grep tags:omit:specs
       - run:
           name: Run untagged test
-          command: yarn workspace @cypress/grep cypress:run:untagged
+          command: yarn workspace @cypress/grep untagged
       - run:
           name: Run tag inverted test
-          command: yarn workspace @cypress/grep cypress:run:tag:inverted
+          command: yarn workspace @cypress/grep tag:inverted
       - run:
           name: Run inverted test
-          command: yarn workspace @cypress/grep cypress:run:inverted
+          command: yarn workspace @cypress/grep inverted
       - run:
           name: Run unit tests
           command: yarn workspace @cypress/grep test
